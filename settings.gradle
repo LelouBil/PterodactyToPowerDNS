@@ -1,0 +1,3 @@
+rootProject.name = 'PterodactyToPowerDNS'
+include 'powerdns-auto-api'
+

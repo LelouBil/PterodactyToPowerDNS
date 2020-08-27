@@ -1,0 +1,1675 @@
+openapi: 3.0.1
+info:
+  license:
+    name: MIT
+  title: PowerDNS Authoritative HTTP API
+  version: 0.0.13
+servers:
+- url: http://localhost:8081/api/v1
+security:
+- APIKeyHeader: []
+paths:
+  /servers:
+    get:
+      operationId: listServers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Server'
+                type: array
+          description: An array of servers
+      summary: List all servers
+      tags:
+      - servers
+      x-accepts: application/json
+  /servers/{server_id}:
+    get:
+      operationId: listServer
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Server'
+          description: An server
+      summary: List a server
+      tags:
+      - servers
+      x-accepts: application/json
+  /servers/{server_id}/cache/flush:
+    put:
+      operationId: cacheFlushByName
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The domain name to flush from the cache
+        in: query
+        name: domain
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheFlushResult'
+          description: Flush successful
+      summary: Flush a cache-entry by name
+      tags:
+      - servers
+      x-accepts: application/json
+  /servers/{server_id}/zones:
+    get:
+      operationId: listZones
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: |
+          When set to the name of a zone, only this zone is returned.
+          If no zone with that name exists, the response is an empty array.
+          This can e.g. be used to check if a zone exists in the database without having to guess/encode the zone's id or to check if a zone exists.
+        in: query
+        name: zone
+        schema:
+          type: string
+      - description: “true” (default) or “false”, whether to include the “dnssec”
+          and ”edited_serial” fields in the Zone objects. Setting this to ”false”
+          will make the query a lot faster.
+        in: query
+        name: dnssec
+        schema:
+          default: true
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Zone'
+                type: array
+          description: An array of Zones
+      summary: List all Zones in a server
+      tags:
+      - zones
+      x-accepts: application/json
+    post:
+      operationId: createZone
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: “true” (default) or “false”, whether to include the “rrsets”
+          in the response Zone object.
+        in: query
+        name: rrsets
+        schema:
+          default: true
+          type: boolean
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Zone'
+        description: The zone struct to patch with
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: A zone
+      summary: Creates a new domain, returns the Zone on creation.
+      tags:
+      - zones
+      x-codegen-request-body-name: zone_struct
+      x-contentType: application/json
+      x-accepts: application/json
+  /servers/{server_id}/zones/{zone_id}:
+    delete:
+      operationId: deleteZone
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content: {}
+          description: Returns 204 No Content on success.
+      summary: Deletes this zone, all attached metadata and rrsets.
+      tags:
+      - zones
+      x-accepts: application/json
+    get:
+      operationId: listZone
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      - description: “true” (default) or “false”, whether to include the “rrsets”
+          in the response Zone object.
+        in: query
+        name: rrsets
+        schema:
+          default: true
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: A Zone
+      summary: zone managed by a server
+      tags:
+      - zones
+      x-accepts: application/json
+    patch:
+      operationId: patchZone
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Zone'
+        description: The zone struct to patch with
+        required: true
+      responses:
+        "204":
+          content: {}
+          description: Returns 204 No Content on success.
+      summary: Creates/modifies/deletes RRsets present in the payload and their comments.
+        Returns 204 No Content on success.
+      tags:
+      - zones
+      x-codegen-request-body-name: zone_struct
+      x-contentType: application/json
+      x-accepts: application/json
+    put:
+      description: 'Allowed fields in client body: all except id, url and name. Returns
+        204 No Content on success.'
+      operationId: putZone
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Zone'
+        description: The zone struct to patch with
+        required: true
+      responses:
+        "204":
+          content: {}
+          description: Returns 204 No Content on success.
+      summary: Modifies basic zone data (metadata).
+      tags:
+      - zones
+      x-codegen-request-body-name: zone_struct
+      x-contentType: application/json
+      x-accepts: application/json
+  /servers/{server_id}/zones/{zone_id}/notify:
+    put:
+      description: Fails when zone kind is not Master or Slave, or master and slave
+        are disabled in the configuration. Only works for Slave if renotify is on.
+        Clients MUST NOT send a body.
+      operationId: notifyZone
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content: {}
+          description: OK
+      summary: Send a DNS NOTIFY to all slaves.
+      tags:
+      - zones
+      x-accepts: application/json
+  /servers/{server_id}/zones/{zone_id}/axfr-retrieve:
+    put:
+      description: Fails when zone kind is not Slave, or slave is disabled in the
+        configuration. Clients MUST NOT send a body.
+      operationId: axfrRetrieveZone
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content: {}
+          description: OK
+      summary: Retrieve slave zone from its master.
+      tags:
+      - zones
+      x-accepts: application/json
+  /servers/{server_id}/zones/{zone_id}/export:
+    get:
+      operationId: axfrExportZone
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+      summary: Returns the zone in AXFR format.
+      tags:
+      - zones
+      x-accepts: application/json
+  /servers/{server_id}/zones/{zone_id}/rectify:
+    put:
+      description: This does not take into account the API-RECTIFY metadata. Fails
+        on slave zones and zones that do not have DNSSEC.
+      operationId: rectifyZone
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+      summary: Rectify the zone data.
+      tags:
+      - zones
+      x-accepts: application/json
+  /servers/{server_id}/config:
+    get:
+      operationId: getConfig
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ConfigSetting'
+                type: array
+          description: List of config values
+      summary: Returns all ConfigSettings for a single server
+      tags:
+      - config
+      x-accepts: application/json
+  /servers/{server_id}/config/{config_setting_name}:
+    get:
+      description: NOT IMPLEMENTED
+      operationId: getConfigSetting
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The name of the setting to retrieve
+        in: path
+        name: config_setting_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigSetting'
+          description: List of config values
+      summary: Returns a specific ConfigSetting for a single server
+      tags:
+      - config
+      x-accepts: application/json
+  /servers/{server_id}/statistics:
+    get:
+      description: Query PowerDNS internal statistics.
+      operationId: getStats
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: |
+          When set to the name of a specific statistic, only this value is returned.
+          If no statistic with that name exists, the response has a 422 status and an error message.
+        in: query
+        name: statistic
+        schema:
+          type: string
+      - description: “true” (default) or “false”, whether to include the Ring items,
+          which can contain thousands of log messages or queried domains. Setting
+          this to ”false” may make the response a lot smaller.
+        in: query
+        name: includerings
+        schema:
+          default: true
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  type: object
+                type: array
+          description: List of Statistic Items
+        "422":
+          content: {}
+          description: Returned when a non-existing statistic name has been requested.
+            Contains an error message
+      summary: Query statistics.
+      tags:
+      - stats
+      x-accepts: application/json
+  /servers/{server_id}/search-data:
+    get:
+      description: Search the data inside PowerDNS for search_term and return at most
+        max_results. This includes zones, records and comments. The * character can
+        be used in search_term as a wildcard character and the ? character can be
+        used as a wildcard for a single character.
+      operationId: searchData
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The string to search for
+        in: query
+        name: q
+        required: true
+        schema:
+          type: string
+      - description: Maximum number of entries to return
+        in: query
+        name: max
+        required: true
+        schema:
+          type: integer
+      - description: Type of data to search for, one of “all”, “zone”, “record”, “comment”
+        in: query
+        name: object_type
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+          description: Returns a JSON array with results
+      summary: Search the data inside PowerDNS
+      tags:
+      - search
+      x-accepts: application/json
+  /servers/{server_id}/zones/{zone_id}/metadata:
+    get:
+      operationId: listMetadata
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Metadata'
+                type: array
+          description: List of Metadata objects
+      summary: Get all the Metadata associated with the zone.
+      tags:
+      - zonemetadata
+      x-accepts: application/json
+    post:
+      description: Creates a set of metadata entries of given kind for the zone. Existing
+        metadata entries for the zone with the same kind are not overwritten.
+      operationId: createMetadata
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Metadata'
+        description: Metadata object with list of values to create
+        required: true
+      responses:
+        "204":
+          content: {}
+          description: OK
+      summary: Creates a set of metadata entries
+      tags:
+      - zonemetadata
+      x-codegen-request-body-name: metadata
+      x-contentType: application/json
+      x-accepts: application/json
+  /servers/{server_id}/zones/{zone_id}/metadata/{metadata_kind}:
+    delete:
+      operationId: deleteMetadata
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      - description: The kind of metadata
+        in: path
+        name: metadata_kind
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content: {}
+          description: OK
+      summary: Delete all items of a single kind of domain metadata.
+      tags:
+      - zonemetadata
+      x-accepts: application/json
+    get:
+      operationId: getMetadata
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      - description: The kind of metadata
+        in: path
+        name: metadata_kind
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metadata'
+          description: Metadata object with list of values
+      summary: Get the content of a single kind of domain metadata as a Metadata object.
+      tags:
+      - zonemetadata
+      x-accepts: application/json
+    put:
+      description: Creates a set of metadata entries of given kind for the zone. Existing
+        metadata entries for the zone with the same kind are removed.
+      operationId: modifyMetadata
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      - description: The kind of metadata
+        in: path
+        name: metadata_kind
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Metadata'
+        description: metadata to add/create
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metadata'
+          description: Metadata object with list of values
+      summary: Replace the content of a single kind of domain metadata.
+      tags:
+      - zonemetadata
+      x-codegen-request-body-name: metadata
+      x-contentType: application/json
+      x-accepts: application/json
+  /servers/{server_id}/zones/{zone_id}/cryptokeys:
+    get:
+      operationId: listCryptokeys
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Cryptokey'
+                type: array
+          description: List of Cryptokey objects
+      summary: Get all CryptoKeys for a zone, except the privatekey
+      tags:
+      - zonecryptokey
+      x-accepts: application/json
+    post:
+      description: This method adds a new key to a zone. The key can either be generated
+        or imported by supplying the content parameter. if content, bits and algo
+        are null, a key will be generated based on the default-ksk-algorithm and default-ksk-size
+        settings for a KSK and the default-zsk-algorithm and default-zsk-size options
+        for a ZSK.
+      operationId: createCryptokey
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cryptokey'
+        description: Add a Cryptokey
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cryptokey'
+          description: Created
+      summary: Creates a Cryptokey
+      tags:
+      - zonecryptokey
+      x-codegen-request-body-name: cryptokey
+      x-contentType: application/json
+      x-accepts: application/json
+  /servers/{server_id}/zones/{zone_id}/cryptokeys/{cryptokey_id}:
+    delete:
+      operationId: deleteCryptokey
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      - description: The id value of the Cryptokey
+        in: path
+        name: cryptokey_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content: {}
+          description: OK
+        "422":
+          content: {}
+          description: Returned when something is wrong with the content of the request.
+            Contains an error message
+      summary: This method deletes a key specified by cryptokey_id.
+      tags:
+      - zonecryptokey
+      x-accepts: application/json
+    get:
+      operationId: getCryptokey
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the zone to retrieve
+        in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      - description: The id value of the CryptoKey
+        in: path
+        name: cryptokey_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cryptokey'
+          description: Cryptokey
+      summary: Returns all data about the CryptoKey, including the privatekey.
+      tags:
+      - zonecryptokey
+      x-accepts: application/json
+    put:
+      operationId: modifyCryptokey
+      parameters:
+      - description: The id of the server to retrieve
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: zone_id
+        required: true
+        schema:
+          type: string
+      - description: Cryptokey to manipulate
+        in: path
+        name: cryptokey_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cryptokey'
+        description: the Cryptokey
+        required: true
+      responses:
+        "204":
+          content: {}
+          description: OK
+        "422":
+          content: {}
+          description: Returned when something is wrong with the content of the request.
+            Contains an error message
+      summary: This method (de)activates a key from zone_name specified by cryptokey_id
+      tags:
+      - zonecryptokey
+      x-codegen-request-body-name: cryptokey
+      x-contentType: application/json
+      x-accepts: application/json
+  /servers/{server_id}/tsigkeys:
+    get:
+      operationId: listTSIGKeys
+      parameters:
+      - description: The id of the server
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TSIGKey'
+                type: array
+          description: List of TSIGKey objects
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal Server Error, keys could not be retrieved. Contains
+            error message
+      summary: Get all TSIGKeys on the server, except the actual key
+      tags:
+      - tsigkey
+      x-accepts: application/json
+    post:
+      description: This methods add a new TSIGKey. The actual key can be generated
+        by the server or be provided by the client
+      operationId: createTSIGKey
+      parameters:
+      - description: The id of the server
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TSIGKey'
+        description: The TSIGKey to add
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TSIGKey'
+          description: Created
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Conflict. A key with this name already exists
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unprocessable Entry, the TSIGKey provided has issues.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal Server Error. There was a problem creating the key
+      summary: Add a TSIG key
+      tags:
+      - tsigkey
+      x-codegen-request-body-name: tsigkey
+      x-contentType: application/json
+      x-accepts: application/json
+  /servers/{server_id}/tsigkeys/{tsigkey_id}:
+    delete:
+      operationId: deleteTSIGKey
+      parameters:
+      - description: The id of the server to retrieve the key from
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the TSIGkey. Should match the "id" field in the TSIGKey
+          object
+        in: path
+        name: tsigkey_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content: {}
+          description: OK, key was deleted
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found. The TSIGKey with the specified tsigkey_id does not
+            exist
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal Server Error. Contains error message
+      summary: Delete the TSIGKey with tsigkey_id
+      tags:
+      - tsigkey
+      x-accepts: application/json
+    get:
+      operationId: getTSIGKey
+      parameters:
+      - description: The id of the server to retrieve the key from
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the TSIGkey. Should match the "id" field in the TSIGKey
+          object
+        in: path
+        name: tsigkey_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TSIGKey'
+          description: OK.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found. The TSIGKey with the specified tsigkey_id does not
+            exist
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal Server Error, keys could not be retrieved. Contains
+            error message
+      summary: Get a specific TSIGKeys on the server, including the actual key
+      tags:
+      - tsigkey
+      x-accepts: application/json
+    put:
+      description: |
+        The TSIGKey at tsigkey_id can be changed in multiple ways:
+         * Changing the Name, this will remove the key with tsigkey_id after adding.
+         * Changing the Algorithm
+         * Changing the Key
+        Only the relevant fields have to be provided in the request body.
+      operationId: putTSIGKey
+      parameters:
+      - description: The id of the server to retrieve the key from
+        in: path
+        name: server_id
+        required: true
+        schema:
+          type: string
+      - description: The id of the TSIGkey. Should match the "id" field in the TSIGKey
+          object
+        in: path
+        name: tsigkey_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TSIGKey'
+        description: A (possibly stripped down) TSIGKey object with the new values
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TSIGKey'
+          description: OK. TSIGKey is changed.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Not found. The TSIGKey with the specified tsigkey_id does not
+            exist
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Internal Server Error. Contains error message
+      tags:
+      - tsigkey
+      x-codegen-request-body-name: tsigkey
+      x-contentType: application/json
+      x-accepts: application/json
+components:
+  schemas:
+    Server:
+      example:
+        zones_url: zones_url
+        daemon_type: daemon_type
+        config_url: config_url
+        id: id
+        type: type
+        version: version
+        url: url
+      properties:
+        type:
+          description: Set to “Server”
+          type: string
+        id:
+          description: The id of the server, “localhost”
+          type: string
+        daemon_type:
+          description: “recursor” for the PowerDNS Recursor and “authoritative” for
+            the Authoritative Server
+          type: string
+        version:
+          description: The version of the server software
+          type: string
+        url:
+          description: The API endpoint for this server
+          type: string
+        config_url:
+          description: The API endpoint for this server’s configuration
+          type: string
+        zones_url:
+          description: The API endpoint for this server’s zones
+          type: string
+      title: Server
+      type: object
+    Servers:
+      items:
+        $ref: '#/components/schemas/Server'
+      type: array
+    Zone:
+      description: This represents an authoritative DNS Zone.
+      example:
+        dnssec: true
+        api_rectify: true
+        kind: Native
+        notified_serial: 5
+        masters:
+        - masters
+        - masters
+        slave_tsig_key_ids:
+        - slave_tsig_key_ids
+        - slave_tsig_key_ids
+        type: type
+        url: url
+        soa_edit_api: soa_edit_api
+        soa_edit: soa_edit
+        nameservers:
+        - nameservers
+        - nameservers
+        rrsets:
+        - comments:
+          - modified_at: 6
+            content: content
+            account: account
+          - modified_at: 6
+            content: content
+            account: account
+          records:
+          - disabled: true
+            set-ptr: true
+            content: content
+          - disabled: true
+            set-ptr: true
+            content: content
+          changetype: changetype
+          name: name
+          type: type
+          ttl: 0
+        - comments:
+          - modified_at: 6
+            content: content
+            account: account
+          - modified_at: 6
+            content: content
+            account: account
+          records:
+          - disabled: true
+            set-ptr: true
+            content: content
+          - disabled: true
+            set-ptr: true
+            content: content
+          changetype: changetype
+          name: name
+          type: type
+          ttl: 0
+        serial: 1
+        zone: zone
+        nsec3param: nsec3param
+        name: name
+        edited_serial: 5
+        master_tsig_key_ids:
+        - master_tsig_key_ids
+        - master_tsig_key_ids
+        id: id
+        nsec3narrow: true
+        presigned: true
+        account: account
+      properties:
+        id:
+          description: Opaque zone id (string), assigned by the server, should not
+            be interpreted by the application. Guaranteed to be safe for embedding
+            in URLs.
+          type: string
+        name:
+          description: Name of the zone (e.g. “example.com.”) MUST have a trailing
+            dot
+          type: string
+        type:
+          description: Set to “Zone”
+          type: string
+        url:
+          description: API endpoint for this zone
+          type: string
+        kind:
+          description: Zone kind, one of “Native”, “Master”, “Slave”
+          enum:
+          - Native
+          - Master
+          - Slave
+          type: string
+        rrsets:
+          description: RRSets in this zone (for zones/{zone_id} endpoint only; omitted
+            during GET on the .../zones list endpoint)
+          items:
+            $ref: '#/components/schemas/RRSet'
+          type: array
+        serial:
+          description: The SOA serial number
+          type: integer
+        notified_serial:
+          description: The SOA serial notifications have been sent out for
+          type: integer
+        edited_serial:
+          description: The SOA serial as seen in query responses. Calculated using
+            the SOA-EDIT metadata, default-soa-edit and default-soa-edit-signed settings
+          type: integer
+        masters:
+          description: ' List of IP addresses configured as a master for this zone
+            (“Slave” type zones only)'
+          items:
+            type: string
+          type: array
+        dnssec:
+          description: Whether or not this zone is DNSSEC signed (inferred from presigned
+            being true XOR presence of at least one cryptokey with active being true)
+          type: boolean
+        nsec3param:
+          description: The NSEC3PARAM record
+          type: string
+        nsec3narrow:
+          description: Whether or not the zone uses NSEC3 narrow
+          type: boolean
+        presigned:
+          description: Whether or not the zone is pre-signed
+          type: boolean
+        soa_edit:
+          description: The SOA-EDIT metadata item
+          type: string
+        soa_edit_api:
+          description: The SOA-EDIT-API metadata item
+          type: string
+        api_rectify:
+          description: ' Whether or not the zone will be rectified on data changes
+            via the API'
+          type: boolean
+        zone:
+          description: MAY contain a BIND-style zone file when creating a zone
+          type: string
+        account:
+          description: MAY be set. Its value is defined by local policy
+          type: string
+        nameservers:
+          description: MAY be sent in client bodies during creation, and MUST NOT
+            be sent by the server. Simple list of strings of nameserver names, including
+            the trailing dot. Not required for slave zones.
+          items:
+            type: string
+          type: array
+        master_tsig_key_ids:
+          description: The id of the TSIG keys used for master operation in this zone
+          items:
+            type: string
+          type: array
+        slave_tsig_key_ids:
+          description: The id of the TSIG keys used for slave operation in this zone
+          items:
+            type: string
+          type: array
+      title: Zone
+      type: object
+    Zones:
+      items:
+        $ref: '#/components/schemas/Zone'
+      type: array
+    RRSet:
+      description: This represents a Resource Record Set (all records with the same
+        name and type).
+      example:
+        comments:
+        - modified_at: 6
+          content: content
+          account: account
+        - modified_at: 6
+          content: content
+          account: account
+        records:
+        - disabled: true
+          set-ptr: true
+          content: content
+        - disabled: true
+          set-ptr: true
+          content: content
+        changetype: changetype
+        name: name
+        type: type
+        ttl: 0
+      properties:
+        name:
+          description: Name for record set (e.g. “www.powerdns.com.”)
+          type: string
+        type:
+          description: Type of this record (e.g. “A”, “PTR”, “MX”)
+          type: string
+        ttl:
+          description: DNS TTL of the records, in seconds. MUST NOT be included when
+            changetype is set to “DELETE”.
+          type: integer
+        changetype:
+          description: 'MUST be added when updating the RRSet. Must be REPLACE or
+            DELETE. With DELETE, all existing RRs matching name and type will be deleted,
+            including all comments. With REPLACE: when records is present, all existing
+            RRs matching name and type will be deleted, and then new records given
+            in records will be created. If no records are left, any existing comments
+            will be deleted as well. When comments is present, all existing comments
+            for the RRs matching name and type will be deleted, and then new comments
+            given in comments will be created.'
+          type: string
+        records:
+          description: All records in this RRSet. When updating Records, this is the
+            list of new records (replacing the old ones). Must be empty when changetype
+            is set to DELETE. An empty list results in deletion of all records (and
+            comments).
+          items:
+            $ref: '#/components/schemas/Record'
+          type: array
+        comments:
+          description: List of Comment. Must be empty when changetype is set to DELETE.
+            An empty list results in deletion of all comments. modified_at is optional
+            and defaults to the current server time.
+          items:
+            $ref: '#/components/schemas/Comment'
+          type: array
+      required:
+      - changetype
+      - name
+      - records
+      - ttl
+      - type
+      title: RRSet
+      type: object
+    Record:
+      description: The RREntry object represents a single record.
+      example:
+        disabled: true
+        set-ptr: true
+        content: content
+      properties:
+        content:
+          description: The content of this record
+          type: string
+        disabled:
+          description: Whether or not this record is disabled. When unset, the record
+            is not disabled
+          type: boolean
+        set-ptr:
+          description: If set to true, the server will find the matching reverse zone
+            and create a PTR there. Existing PTR records are replaced. If no matching
+            reverse Zone, an error is thrown. Only valid in client bodies, only valid
+            for A and AAAA types. Not returned by the server. This feature is deprecated
+            and will be removed in 4.3.0.
+          type: boolean
+      required:
+      - content
+      title: Record
+      type: object
+    Comment:
+      description: A comment about an RRSet.
+      example:
+        modified_at: 6
+        content: content
+        account: account
+      properties:
+        content:
+          description: The actual comment
+          type: string
+        account:
+          description: Name of an account that added the comment
+          type: string
+        modified_at:
+          description: Timestamp of the last change to the comment
+          type: integer
+      title: Comment
+      type: object
+    TSIGKey:
+      description: A TSIG key that can be used to authenticate NOTIFYs and AXFRs
+      example:
+        name: name
+        id: id
+        type: type
+        key: key
+        algorithm: algorithm
+      properties:
+        name:
+          description: The name of the key
+          type: string
+        id:
+          description: The ID for this key, used in the TSIGkey URL endpoint.
+          readOnly: true
+          type: string
+        algorithm:
+          description: The algorithm of the TSIG key
+          type: string
+        key:
+          description: The Base64 encoded secret key, empty when listing keys. MAY
+            be empty when POSTing to have the server generate the key material
+          type: string
+        type:
+          description: Set to "TSIGKey"
+          readOnly: true
+          type: string
+      title: TSIGKey
+      type: object
+    ConfigSetting:
+      example:
+        name: name
+        type: type
+        value: value
+      properties:
+        name:
+          description: set to "ConfigSetting"
+          type: string
+        type:
+          description: The name of this setting (e.g. ‘webserver-port’)
+          type: string
+        value:
+          description: The value of setting name
+          type: string
+      title: ConfigSetting
+      type: object
+    SimpleStatisticItem:
+      properties:
+        name:
+          description: Item name
+          type: string
+        value:
+          description: Item value
+          type: string
+      title: SimpleStatisticItem
+      type: object
+    StatisticItem:
+      properties:
+        name:
+          description: Item name
+          type: string
+        type:
+          description: set to "StatisticItem"
+          type: string
+        value:
+          description: Item value
+          type: string
+      title: StatisticItem
+      type: object
+    MapStatisticItem:
+      properties:
+        name:
+          description: Item name
+          type: string
+        type:
+          description: Set to "MapStatisticItem"
+          type: string
+        value:
+          description: Named values
+          items:
+            $ref: '#/components/schemas/SimpleStatisticItem'
+          type: array
+      title: MapStatisticItem
+      type: object
+    RingStatisticItem:
+      properties:
+        name:
+          description: Item name
+          type: string
+        type:
+          description: Set to "RingStatisticItem"
+          type: string
+        size:
+          description: Ring size
+          type: integer
+        value:
+          description: Named values
+          items:
+            $ref: '#/components/schemas/SimpleStatisticItem'
+          type: array
+      title: RingStatisticItem
+      type: object
+    SearchResultZone:
+      properties:
+        name:
+          type: string
+        object_type:
+          description: set to "zone"
+          type: string
+        zone_id:
+          type: string
+      title: SearchResultZone
+      type: object
+    SearchResultRecord:
+      properties:
+        content:
+          type: string
+        disabled:
+          type: boolean
+        name:
+          type: string
+        object_type:
+          description: set to "record"
+          type: string
+        zone_id:
+          type: string
+        zone:
+          type: string
+        type:
+          type: string
+        ttl:
+          type: integer
+      title: SearchResultRecord
+      type: object
+    SearchResultComment:
+      properties:
+        content:
+          type: string
+        name:
+          type: string
+        object_type:
+          description: set to "comment"
+          type: string
+        zone_id:
+          type: string
+        zone:
+          type: string
+      title: SearchResultComment
+      type: object
+    SearchResult:
+      example:
+        zone_id: zone_id
+        object_type: object_type
+        zone: zone
+        name: name
+        disabled: true
+        type: type
+        ttl: 0
+        content: content
+      properties:
+        content:
+          type: string
+        disabled:
+          type: boolean
+        name:
+          type: string
+        object_type:
+          description: set to one of "record, zone, comment"
+          type: string
+        zone_id:
+          type: string
+        zone:
+          type: string
+        type:
+          type: string
+        ttl:
+          type: integer
+      title: SearchResult
+      type: object
+    SearchResults:
+      items:
+        $ref: '#/components/schemas/SearchResult'
+      type: array
+    Metadata:
+      description: Represents zone metadata
+      example:
+        metadata:
+        - metadata
+        - metadata
+        kind: kind
+      properties:
+        kind:
+          description: Name of the metadata
+          type: string
+        metadata:
+          description: Array with all values for this metadata kind.
+          items:
+            type: string
+          type: array
+      title: Metadata
+      type: object
+    Cryptokey:
+      description: Describes a DNSSEC cryptographic key
+      example:
+        privatekey: privatekey
+        bits: 6
+        active: true
+        keytype: ksk
+        id: 0
+        published: true
+        type: type
+        dnskey: dnskey
+        ds:
+        - ds
+        - ds
+        algorithm: algorithm
+      properties:
+        type:
+          description: set to "Cryptokey"
+          type: string
+        id:
+          description: The internal identifier, read only
+          type: integer
+        keytype:
+          enum:
+          - ksk
+          - zsk
+          - csk
+          type: string
+        active:
+          description: Whether or not the key is in active use
+          type: boolean
+        published:
+          description: Whether or not the DNSKEY record is published in the zone
+          type: boolean
+        dnskey:
+          description: The DNSKEY record for this key
+          type: string
+        ds:
+          description: An array of DS records for this key
+          items:
+            type: string
+          type: array
+        privatekey:
+          description: The private key in ISC format
+          type: string
+        algorithm:
+          description: The name of the algorithm of the key, should be a mnemonic
+          type: string
+        bits:
+          description: The size of the key
+          type: integer
+      title: Cryptokey
+      type: object
+    Error:
+      description: Returned when the server encounters an error. Either in client
+        input or internally
+      properties:
+        error:
+          description: A human readable error message
+          type: string
+        errors:
+          description: Optional array of multiple errors encountered during processing
+          items:
+            type: string
+          type: array
+      required:
+      - error
+      title: Error
+      type: object
+    CacheFlushResult:
+      description: The result of a cache-flush
+      example:
+        result: result
+        count: 0.8008281904610115
+      properties:
+        count:
+          description: Amount of entries flushed
+          type: number
+        result:
+          description: A message about the result like "Flushed cache"
+          type: string
+      title: CacheFlushResult
+      type: object
+  securitySchemes:
+    APIKeyHeader:
+      in: header
+      name: X-API-Key
+      type: apiKey
+
