@@ -8,11 +8,8 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.util.Strings;
 import org.openapitools.client.ApiClient;
 import org.openapitools.client.ApiException;
 import org.openapitools.client.model.Comment;
@@ -91,7 +88,7 @@ public class Main {
             log.warn("Record was {} but we wanted {}, replacing",rec,o);
             rec.changetype("DELETE");
             Zone z = new Zone();
-            z.rrsets( List.of(rec,o));
+            z.rrsets(Arrays.asList(rec, o));
 
             try {
                 powerDnsAPI.getZonesApi().patchZone(serverid,zoneid,z);
@@ -107,7 +104,7 @@ public class Main {
             log.warn("Record was {} but we wanted {}, replacing",rec,o);
             rec.changetype("DELETE");
             Zone z = new Zone();
-            z.rrsets( List.of(rec,o));
+            z.rrsets(Arrays.asList(rec, o));
 
             try {
                 powerDnsAPI.getZonesApi().patchZone(serverid,zoneid,z);
@@ -161,7 +158,7 @@ public class Main {
         r.ttl(60);
         r.setName(info.getSubdomain() + "." + zoneid + ".");
         r.changetype("REPLACE");
-        r.setComments(List.of(new Comment().content(info.getServerid()).account(username)));
+        r.setComments(Collections.singletonList(new Comment().content(info.getServerid()).account(username)));
         r.setRecords(new ArrayList<>());
         Record re = new Record();
         re.setContent(zoneid + ".");
@@ -177,7 +174,7 @@ public class Main {
         r.ttl(60);
         r.setName("_minecraft._tcp." + info.getSubdomain() + "." + zoneid + ".");
         r.changetype("REPLACE");
-        r.setComments(List.of(new Comment().content(info.getServerid()).account("LelouBil")));
+        r.setComments(Collections.singletonList(new Comment().content(info.getServerid()).account("LelouBil")));
         r.setRecords(new ArrayList<>());
         Record re = new Record();
         re.setContent("0 5 " + info.getPort() + " " + info.getSubdomain() + "." + zoneid + ".");

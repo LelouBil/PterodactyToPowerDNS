@@ -3,4 +3,6 @@
 /build/
 /build/classes/java/main/
 pteropowerdns.properties
-openapi-generator-*.jar
+/.idea/
+PterodactyToPowerDNS*.jar
+openapi-generator*.jar
