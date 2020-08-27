@@ -1,4 +1,4 @@
-#PterodactylToPowerDNS
+# PterodactylToPowerDNS
 
 Simple application that syncs pterodactyl servers with PowerDNS records
 
