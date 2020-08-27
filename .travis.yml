@@ -1,9 +1,16 @@
 language: java
-
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
+    - "$HOME/.gradle/caches/"
+    - "$HOME/.gradle/wrapper/"
+deploy:
+  provider: releases
+  api_key:
+    secure: Xb8A4PX+1bThLvTYl3v8yECqsaygD1PydjmIJYdK128tMucSZeYoXkyfyCb/w7qU1WxNc9taYINd2p3kdiuzeC9F5x7VAPYsoaZnIj4H6gbUjH1bvQ+kxVFf3bKlV1myZtfFKdhXYQBcXwgECbhm4cAeNI8IWj10MkrHhSHf23M1FBrD/CEmY7OgFXUmGBvegeQPyNk6rStVSMj2/PJ1N7cn5+7cYeX27F83nxm2HnCmOipLFW4t+C5Fkdad0h75ZQ/kddV9P8MQ822PjVPB1EOEpOb6o6m8nqWn1ctMxn2o5X+1ZiAAsVcRCe4FkJF8DgCeoWD2m7Bn4CWvBwfrMxSar08mp8GFz/tT/aiUNgwXmYwDE0N839UlL6sVbQCCg4Nwx2cnyIVlbkXvDEcLcXweOEIlZhbsPCRZxaA/jBDBw7teUh0+Xt5hcU9lsOZU60g8WzMTz3yjDQMuztiVxUgKUmS46SvNgWjYtWxi+9RweI9ocoCQ/qOmblceej11eaC/tAeEKPyW/IxyUnlBJ68za/6d/lHxLkgj8ZSwxHZrSpEucSa5creq6TN1AhphGenJ4toiC+C5RrATT0+hRFN+LiICeLFDLbzG8kbMcoSYHF1a+o6gjwtVrTWbueGH1pHsvardGuDxq3UEIvV95cUOjK4O79cEXuAiHlNcMds=
+  file: build/libs/PterodactylToPowerDNS-*-all.jar
+  on:
+    repo: LelouBil/PterodactyToPowerDNS
+  skip_cleanup: 'true'
