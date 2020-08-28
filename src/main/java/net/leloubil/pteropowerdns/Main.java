@@ -64,7 +64,7 @@ public class Main {
                 serverDNSCache.setServerInfoList(getServers());
                 checkCache();
             }
-        }, 0,10000);
+        }, 0, 10000);
     }
 
     private void checkCache() {
@@ -76,38 +76,38 @@ public class Main {
         String serverid = configuration.getString("powerdns-serverid");
         ServerRecord record = serverDNSCache.getDnsRecords().get(info.getServerid());
 
-        if(record == null){
-            log.info("full record for "+ info.getServerid());
+        if (record == null) {
+            log.info("full record for " + info.getServerid());
             fullRecord(info);
             return;
         }
 
-        if(recordsDifferent(getCname(info),record.getCname())){
+        if (recordsDifferent(getCname(info), record.getCname())) {
             RRSet rec = record.getCname();
             RRSet o = getCname(info);
-            log.warn("Record was {} but we wanted {}, replacing",rec,o);
+            log.warn("Record was {} but we wanted {}, replacing", rec, o);
             rec.changetype("DELETE");
             Zone z = new Zone();
             z.rrsets(Arrays.asList(rec, o));
 
             try {
-                powerDnsAPI.getZonesApi().patchZone(serverid,zoneid,z);
+                powerDnsAPI.getZonesApi().patchZone(serverid, zoneid, z);
                 record.setCname(o);
             } catch (ApiException e) {
                 e.printStackTrace();
             }
         }
-        if(configuration.getBoolean("add-srv",false) && info.minecraft && recordsDifferent(getSrv(info),record.getSrv())){
+        if (configuration.getBoolean("add-srv", false) && info.minecraft && recordsDifferent(getSrv(info), record.getSrv())) {
 
             RRSet rec = record.getSrv();
             RRSet o = getSrv(info);
-            log.warn("Record was {} but we wanted {}, replacing",rec,o);
+            log.warn("Record was {} but we wanted {}, replacing", rec, o);
             rec.changetype("DELETE");
             Zone z = new Zone();
             z.rrsets(Arrays.asList(rec, o));
 
             try {
-                powerDnsAPI.getZonesApi().patchZone(serverid,zoneid,z);
+                powerDnsAPI.getZonesApi().patchZone(serverid, zoneid, z);
                 record.setSrv(o);
             } catch (ApiException e) {
                 e.printStackTrace();
@@ -117,12 +117,12 @@ public class Main {
     }
 
     private boolean recordsDifferent(RRSet first, RRSet sec) {
-        return !Objects.equals(first.getName(), sec.getName()) || !Objects.equals(first.getType(), sec.getType()) || commentsDifferent(first.getComments(),sec.getComments()) || !first.getRecords().equals(sec.getRecords());
+        return !Objects.equals(first.getName(), sec.getName()) || !Objects.equals(first.getType(), sec.getType()) || commentsDifferent(first.getComments(), sec.getComments()) || !first.getRecords().equals(sec.getRecords());
     }
 
     private boolean commentsDifferent(@Nullable List<Comment> comments, @Nullable List<Comment> comments1) {
         if (comments == null ^ comments1 == null) return true;
-        if(comments == null) return true;
+        if (comments == null) return true;
         if (comments.size() != comments1.size()) return true;
         return !Objects.equals(comments.get(0).getContent(), comments1.get(0).getContent());
     }
@@ -132,14 +132,22 @@ public class Main {
         String serverid = configuration.getString("powerdns-serverid");
         Zone z = new Zone();
         List<RRSet> records = new ArrayList<>();
-        records.add(getCname(info));
-        if(info.minecraft)
-            records.add(getSrv(info));
+        ServerRecord value = new ServerRecord(info.getServerid());
+        RRSet cname = getCname(info);
+        value.setCname(cname);
+        records.add(cname);
+        if (info.minecraft) {
+            RRSet srv = getSrv(info);
+            records.add(srv);
+            value.setSrv(srv);
+        }
 
         z.setRrsets(records);
         try {
-            powerDnsAPI.getZonesApi().patchZone(serverid,zoneid,z);
+            powerDnsAPI.getZonesApi().patchZone(serverid, zoneid, z);
             log.info("added");
+
+            serverDNSCache.getDnsRecords().put(info.getServerid(), value);
         } catch (ApiException e) {
             System.err.println("Exception when calling ZonesApi#patchZone");
             System.err.println("Status code: " + e.getCode());

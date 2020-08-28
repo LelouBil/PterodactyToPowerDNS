@@ -14,7 +14,7 @@ application{
 }
 
 
-
+tasks.build.dependsOn tasks.shadowJar
 
 
 repositories {
