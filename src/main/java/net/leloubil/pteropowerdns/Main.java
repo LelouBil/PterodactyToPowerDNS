@@ -159,7 +159,7 @@ public class Main {
 
     private RRSet getCname(ServerInfo info) {
         String username = configuration.getString("powerdns-username");
-        Objects.requireNonNull(username,"powerdns-username");
+        Objects.requireNonNull(username, "powerdns-username");
         RRSet r = new RRSet();
         String zoneid = configuration.getString("powerdns-zoneid");
         r.setType("CNAME");
@@ -212,15 +212,15 @@ public class Main {
 
     private HashMap<String, ServerInfo> getServers() {
         return pteroAdminAPI.asApplication().retrieveServers().execute().stream()
-                .map(ServerInfo::new).collect(Collectors.toMap(ServerInfo::getServerid, s -> s ,(prev,next) -> next, HashMap::new));
+                .map(ServerInfo::new).collect(Collectors.toMap(ServerInfo::getServerid, s -> s, (prev, next) -> next, HashMap::new));
     }
 
     private void linkRecords(RRSet record) {
-        if(record.getComments() == null || record.getComments().isEmpty()) return;
+        if (record.getComments() == null || record.getComments().isEmpty()) return;
         String serverId = record.getComments().get(0).getContent();
         ServerRecord info = serverDNSCache.getDnsRecords().get(serverId);
-        if(info == null) info = new ServerRecord(serverId);
-        switch (record.getType()){
+        if (info == null) info = new ServerRecord(serverId);
+        switch (record.getType()) {
             case "CNAME":
             case "A":
                 info.setCname(record);
@@ -228,10 +228,10 @@ public class Main {
             case "SRV":
                 info.setSrv(record);
         }
-        serverDNSCache.getDnsRecords().put(info.getServerId(),info);
+        serverDNSCache.getDnsRecords().put(info.getServerId(), info);
     }
 
-    private PowerDNSApi loadPowerDNSAPI() throws NullPointerException{
+    private PowerDNSApi loadPowerDNSAPI() throws NullPointerException {
         String powerDnsUrl = configuration.getString("powerdns-url");
         Objects.requireNonNull(powerDnsUrl, "powerdns-url");
         String powerDnsApiKey = configuration.getString("powerdns-apikey");

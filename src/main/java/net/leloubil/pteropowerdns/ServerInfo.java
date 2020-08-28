@@ -7,7 +7,13 @@ public class ServerInfo {
 
 
     @Getter
-    private String subdomain;
+    private final String subdomain;
+    @Getter
+    private final String serverid;
+    @Getter
+    private final int port;
+    @Getter
+    public boolean minecraft;
 
     public ServerInfo(ApplicationServer server) {
         this.subdomain = server.getExternalId();
@@ -15,15 +21,6 @@ public class ServerInfo {
         this.port = Integer.parseInt(server.retrieveAllocation().execute().getPort());
         this.minecraft = server.retrieveNest().execute().getName().equals("Minecraft");
     }
-
-    @Getter
-    private String serverid;
-
-    @Getter
-    public boolean minecraft;
-
-    @Getter
-    private int port;
 
 
 }

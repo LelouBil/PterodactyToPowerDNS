@@ -13,7 +13,7 @@ public class PowerDNSApi {
     @Getter
     private final ZonesApi zonesApi;
 
-    public PowerDNSApi(ApiClient client){
+    public PowerDNSApi(ApiClient client) {
         serversApi = new ServersApi(client);
         zonesApi = new ZonesApi(client);
     }
