@@ -6,6 +6,8 @@ It uses the external id field in the pterodactyl server info as subdomain
 
 This app also has support for SRV records for minecraft servers
 
+NOT TESTED WITH PTERODACTYL VERSIONS > 1.0
+
 To use : 
 place a `pteropowerdns.properties` file in the same directory as the jar and fill this sample configuration
 
